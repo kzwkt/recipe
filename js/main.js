@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${BASE_PATH}/recipes-list.json`);
             if (!response.ok) {
                 if (response.status === 404) {
-                    console.warn('recipes-list.json not found. Ensure it\'s generated and the BASE_PATH is correct.');
                     loadingMessage.textContent = 'Recipes list not found. Please check deployment and console.';
                     return [];
                 }
@@ -31,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('Error fetching recipes-list.json:', error);
             loadingMessage.textContent = 'Error loading recipes. Please check the browser console for details.';
             return [];
         }
@@ -158,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
             recipeCache[filename] = htmlContent;
             recipeBodyDiv.innerHTML = htmlContent;
         } catch (error) {
-            console.error('Error loading recipe content:', error);
             recipeBodyDiv.innerHTML = `<p style="color: red;">Failed to load recipe: ${filename}.</p>`;
         }
     }
