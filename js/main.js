@@ -50,4 +50,121 @@ document.addEventListener('DOMContentLoaded', () => {
             existingUl.remove();
         }
 
-        const recipes = await getRecipeManifest(); //
+        const recipes = await getRecipeManifest(); // Fetch the recipe manifest
+
+        if (recipes.length === 0) {
+            loadingMessage.textContent = 'No recipes found yet!';
+            return;
+        }
+
+        const ul = document.createElement('ul');
+        ul.classList.add('recipe-list'); // Add a class for potential styling
+
+        recipes.forEach(recipe => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = `#${recipe.id}`; // Use the 'id' from the JSON for URL hash navigation
+            a.textContent = recipe.title; // Display the clean title from the JSON
+            a.dataset.filename = recipe.file; // Store the original filename to fetch the content later
+            a.classList.add('recipe-link'); // Add a class for event delegation
+            li.appendChild(a);
+            ul.appendChild(li);
+        });
+
+        recipesContainer.appendChild(ul); // Add the generated list to the container
+        loadingMessage.style.display = 'none'; // Hide loading message
+    }
+
+    // --- Function to load and display a specific recipe's content ---
+    async function loadRecipeContent(filename) {
+        recipeListSection.style.display = 'none'; // Hide the list section
+        recipeContentSection.style.display = 'block'; // Show the individual recipe section
+        recipeBodyDiv.innerHTML = 'Loading recipe...'; // Show a loading indicator
+
+        // Check if the recipe content is already in the cache
+        if (recipeCache[filename]) {
+            recipeBodyDiv.innerHTML = recipeCache[filename];
+            return; // Exit if already cached
+        }
+
+        try {
+            // Fetch the recipe's HTML content using the correct base path
+            const response = await fetch(`${BASE_PATH}/blog/${filename}`); // <--- Modified path here
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const htmlContent = await response.text(); // Get the raw HTML content
+
+            recipeCache[filename] = htmlContent; // Store content in cache
+            recipeBodyDiv.innerHTML = htmlContent; // Inject the HTML content into the div
+
+        } catch (error) {
+            console.error('Error loading recipe content:', error);
+            recipeBodyDiv.innerHTML = `<p style="color: red;">Failed to load recipe: ${filename}.</p>`;
+        }
+    }
+
+    // --- Event Listener for Clicks on Recipe Links ---
+    // Using event delegation on the container for efficiency
+    recipesContainer.addEventListener('click', (event) => {
+        // Check if the clicked element is a recipe link
+        if (event.target.classList.contains('recipe-link')) {
+            event.preventDefault(); // Prevent default link behavior (page reload)
+            const filename = event.target.dataset.filename; // Get the filename from data-filename attribute
+            loadRecipeContent(filename); // Load the recipe content
+            window.location.hash = event.target.href.split('#')[1]; // Update URL hash for direct linking/back button
+        }
+    });
+
+    // --- Event Listener for the "Back to Recipes" button ---
+    backToListBtn.addEventListener('click', () => {
+        // Clearing the hash will trigger the 'hashchange' event,
+        // which then correctly calls displayRecipeList.
+        window.location.hash = ''; 
+    });
+
+    // --- Event Listener for the "Home" navigation link ---
+    homeLink.addEventListener('click', (event) => {
+        event.preventDefault(); // Prevent default link behavior
+        // Clearing the hash will trigger the 'hashchange' event,
+        // which then correctly calls displayRecipeList.
+        window.location.hash = ''; 
+    });
+
+    // --- Handle Browser History (Back/Forward buttons) and Direct URL Access with Hash ---
+    window.addEventListener('hashchange', async () => {
+        const recipeHashId = window.location.hash.substring(1); // Get the ID from the URL hash (remove '#')
+        if (recipeHashId) {
+            const recipes = await getRecipeManifest(); // Get the manifest to find the file
+            const targetRecipe = recipes.find(r => r.id === recipeHashId); // Find the recipe by its ID
+            if (targetRecipe) {
+                loadRecipeContent(targetRecipe.file); // Load the recipe content if found
+            } else {
+                displayRecipeList(); // If hash doesn't match a recipe, show the list
+            }
+        } else {
+            // This is the sole, correct place to call displayRecipeList when the hash is empty
+            displayRecipeList(); 
+        }
+    });
+
+    // --- Initial Page Load Logic ---
+    // This runs once when the page first loads to determine what to display
+    async function initializePage() {
+        if (window.location.hash) {
+            const recipeHashId = window.location.hash.substring(1);
+            const recipes = await getRecipeManifest(); // Fetch manifest for initial hash check
+            const targetRecipe = recipes.find(r => r.id === recipeHashId);
+            if (targetRecipe) {
+                loadRecipeContent(targetRecipe.file); // Load specific recipe if hash matches
+            } else {
+                displayRecipeList(); // Otherwise, show the full list
+            }
+        } else {
+            displayRecipeList(); // No hash present, so just show the list
+        }
+    }
+
+    // Call the initialization function when the DOM is ready
+    initializePage();
+});
