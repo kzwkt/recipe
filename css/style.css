@@ -65,7 +65,7 @@ nav a:hover {
 main {
     max-width: 70ch; /* Max width based on character count for readability */
     width: 90%; /* Still allows it to shrink on smaller screens */
-
+    
     padding: 2rem;
     margin: 2rem auto;
     background: #fff;
@@ -229,16 +229,9 @@ footer {
     font-weight: 700;
 }
 
-.alphabet-nav-link.active:hover {
-    background-color: #229954;
-}
+/* We removed the disabled-letter class in JS, so this CSS rule is no longer needed */
+/* .alphabet-nav-link.disabled-letter { ... } */
 
-.alphabet-nav-link.disabled-letter {
-    color: #bbb;
-    cursor: default;
-    opacity: 0.6;
-    font-weight: 400;
-}
 
 /* Optional: Badge for tags on recipe list items */
 .recipe-tags-display {
@@ -288,7 +281,7 @@ footer {
         padding: 0.7rem 1.2rem;
         font-size: 1rem;
     }
-
+    
     .alphabet-nav-link {
         font-size: 1rem;
         padding: 0.2rem 0.5rem;
