@@ -19,13 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentStartingLetter = ''; // Tracks the currently selected letter filter (e.g., 'C' for Chicken)
     let currentDisplayMode = 'home'; // Tracks the active view: 'home' (all recipes) or 'index' (A-Z filter)
 
-    // --- Base Path for Assets (adjust if your GitHub Pages setup is different) ---
+    // --- Base Path for Assets (adjust this if your GitHub Pages setup is different) ---
     // Example: if your repo is 'my-recipes' and it's deployed to 'username.github.io/my-recipes/',
     // then BASE_PATH should be '/my-recipes'.
-    // If it's a project page at 'username.github.io/', it might be empty or just '/'.
+    // If it's a user/organization page at 'username.github.io/', it might be empty or just '/'.
     const BASE_PATH = '/recipe'; 
 
-    // --- Asynchronous Function to Fetch Recipe Manifest ---
+    // --- Asynchronous Function to Fetch Recipe Manifest (recipes-list.json) ---
     async function getRecipeManifest() {
         try {
             const response = await fetch(`${BASE_PATH}/recipes-list.json`);
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Handle 404 specifically for better debugging
                 if (response.status === 404) {
                     console.warn('recipes-list.json not found. Ensure it\'s generated and the BASE_PATH is correct.');
-                    loadingMessage.textContent = 'Recipes list not found. Please check deployment.';
+                    loadingMessage.textContent = 'Recipes list not found. Please check deployment and console.';
                     return [];
                 }
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -119,24 +119,29 @@ document.addEventListener('DOMContentLoaded', () => {
         recipesContainer.appendChild(ul); // Append the complete list to the container
     }
 
-    // --- Function to Dynamically Display the A-Z Navigation Bar ---
+    // --- Function to Dynamically Display ONLY Available Letters in the A-Z Navigation Bar ---
     function displayAlphabeticalNav() {
         alphabetNavContainer.innerHTML = ''; // Clear existing A-Z navigation
         const navUl = document.createElement('ul');
         navUl.classList.add('alphabet-nav-list');
 
-        // Identify which letters actually have recipes to enable them
+        // Identify all unique starting letters from your loaded recipes
         const existingFirstLetters = new Set();
         allRecipes.forEach(recipe => {
-            existingFirstLetters.add(recipe.title.charAt(0).toUpperCase());
+            // Ensure recipe.title exists and has at least one character
+            if (recipe.title && recipe.title.length > 0) {
+                existingFirstLetters.add(recipe.title.charAt(0).toUpperCase());
+            }
         });
 
-        // Loop through all letters A-Z to create the navigation
-        for (let i = 65; i <= 90; i++) { // ASCII A=65, Z=90
-            const letter = String.fromCharCode(i);
+        // Convert the Set of unique letters to an Array and sort it alphabetically
+        const sortedAvailableLetters = Array.from(existingFirstLetters).sort();
+
+        // Loop through ONLY the letters that have corresponding recipes
+        sortedAvailableLetters.forEach(letter => {
             const li = document.createElement('li');
             const navLink = document.createElement('a');
-            navLink.href = '#'; // Links act as filters, not direct anchors
+            navLink.href = '#'; // Links act as filters
             navLink.textContent = letter;
             navLink.classList.add('alphabet-nav-link');
 
@@ -145,29 +150,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 navLink.classList.add('active');
             }
 
-            // Disable letters that have no corresponding recipes
-            if (!existingFirstLetters.has(letter)) {
-                navLink.classList.add('disabled-letter');
-                navLink.style.pointerEvents = 'none'; // Make it unclickable via CSS
-            } else {
-                // Attach click event listener for clickable letters
-                navLink.addEventListener('click', (event) => {
-                    event.preventDefault(); // Prevent default link behavior
+            // Since we are only generating links for available letters,
+            // we don't need the 'disabled-letter' class or 'pointer-events: none;' here.
 
-                    // Toggle selected letter logic
-                    if (currentStartingLetter === letter) {
-                        currentStartingLetter = ''; // Deselect if already active
-                    } else {
-                        currentStartingLetter = letter; // Select new letter
-                    }
-                    
-                    displayAlphabeticalNav(); // Re-render A-Z nav to update active state
-                    updateRecipeDisplay(); // Re-filter and display recipes
-                });
-            }
+            // Attach click event listener for these clickable letters
+            navLink.addEventListener('click', (event) => {
+                event.preventDefault(); // Prevent default link behavior
+
+                // Toggle selected letter logic
+                if (currentStartingLetter === letter) {
+                    currentStartingLetter = ''; // Deselect if already active
+                } else {
+                    currentStartingLetter = letter; // Select new letter
+                }
+
+                displayAlphabeticalNav(); // Re-render A-Z nav to update active state
+                updateRecipeDisplay();    // Re-filter and display recipes
+            });
+
             li.appendChild(navLink);
             navUl.appendChild(li);
-        }
+        });
         alphabetNavContainer.appendChild(navUl); // Add the A-Z list to the container
     }
 
@@ -264,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingMessage.textContent = 'Loading recipes...'; // Initial message
         allRecipes = await getRecipeManifest(); // Fetch all recipes once
 
-        // --- DEBUGGING: Check if recipes were loaded ---
+        // --- DEBUGGING: Check if recipes were loaded (this log will show in your browser's console) ---
         console.log("Recipes loaded and available in scope:", allRecipes); 
 
         if (allRecipes.length === 0) {
