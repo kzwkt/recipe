@@ -1,30 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Get references to key elements in the HTML
     const recipeListSection = document.getElementById('recipe-list-section');
-    const recipesContainer = document.getElementById('recipes-container'); // Container for the recipe links
+    const recipesContainer = document.getElementById('recipes-container');
     const loadingMessage = document.getElementById('loading-message');
     const recipeContentSection = document.getElementById('recipe-content-section');
-    const recipeBodyDiv = document.getElementById('recipe-body'); // Div to load recipe HTML into
+    const recipeBodyDiv = document.getElementById('recipe-body');
     const backToListBtn = document.getElementById('back-to-list-btn');
     const homeLink = document.getElementById('home-link');
 
-    // Use a cache to store loaded recipe contents to avoid re-fetching the same recipe multiple times
+    // NEW: Index Controls Container & Browse Index Link
+    const indexControlsContainer = document.getElementById('index-controls-container');
+    const alphabetNavContainer = document.getElementById('alphabet-nav-container');
+    const browseIndexLink = document.getElementById('browse-index-link');
+
     const recipeCache = {};
+    let allRecipes = []; // Full list of all recipes
+    let currentStartingLetter = ''; // Stores the selected letter for filtering in index mode
 
-    // --- IMPORTANT: Define the base path for your GitHub Project Page ---
-    // This should be your repository name (e.g., 'recipe' if your URL is https://kzwkt.github.io/recipe/)
-    const BASE_PATH = '/recipe'; // <--- Make sure this matches your repository name!
+    // NEW: Track current display mode ('home' or 'index')
+    let currentDisplayMode = 'home';
 
-    // --- Function to fetch the pre-generated recipes-list.json manifest ---
+    const BASE_PATH = '/recipe';
+
     async function getRecipeManifest() {
         try {
-            // Fetch the JSON file using the correct base path
             const response = await fetch(`${BASE_PATH}/recipes-list.json`);
             if (!response.ok) {
-                // Handle cases where the file might not be found (e.g., first deployment)
                 if (response.status === 404) {
                     console.warn('recipes-list.json not found. It might not have been generated yet or the path is incorrect.');
-                    return []; // Return an empty array if not found
+                    return [];
                 }
                 throw new Error(`Failed to load recipes-list.json! Status: ${response.status}`);
             }
@@ -37,66 +40,141 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Function to display the list of recipes on the homepage ---
-    async function displayRecipeList() {
-        recipeListSection.style.display = 'block'; // Show the list section
-        recipeContentSection.style.display = 'none'; // Hide the individual recipe section
-        recipeBodyDiv.innerHTML = ''; // Clear any previously loaded recipe content
-        loadingMessage.style.display = 'block'; // Show loading message
+    // --- NEW: Function to manage the display based on current mode and filters ---
+    function updateRecipeDisplay() {
+        recipesContainer.innerHTML = ''; // Clear previous list
+        loadingMessage.style.display = 'block'; // Show loading message by default
 
-        // Clear any existing list items before re-rendering to prevent duplicates
-        const existingUl = recipesContainer.querySelector('ul.recipe-list');
-        if (existingUl) {
-            existingUl.remove();
+        let recipesToDisplay = [];
+
+        if (currentDisplayMode === 'home') {
+            indexControlsContainer.style.display = 'none'; // Hide A-Z controls
+            recipesToDisplay = allRecipes; // Show all recipes in home mode
+            loadingMessage.style.display = 'none'; // Hide if home mode shows all
+            if (allRecipes.length === 0) {
+                loadingMessage.style.display = 'block';
+                loadingMessage.textContent = 'No recipes found.';
+            }
+
+        } else if (currentDisplayMode === 'index') {
+            indexControlsContainer.style.display = 'block'; // Show A-Z controls
+            // If a letter is selected, filter recipes
+            if (currentStartingLetter) {
+                recipesToDisplay = allRecipes.filter(recipe =>
+                    recipe.title.charAt(0).toUpperCase() === currentStartingLetter
+                );
+            } else {
+                recipesToDisplay = []; // No letter selected, so display nothing yet
+            }
+
+            if (currentStartingLetter && recipesToDisplay.length === 0) {
+                loadingMessage.textContent = `No recipes found starting with '${currentStartingLetter}'.`;
+                loadingMessage.style.display = 'block';
+            } else if (!currentStartingLetter) {
+                loadingMessage.textContent = 'Select a letter above to browse recipes.';
+                loadingMessage.style.display = 'block';
+            } else {
+                 loadingMessage.style.display = 'none'; // Hide if a letter is selected and there are results
+            }
         }
 
-        const recipes = await getRecipeManifest(); // Fetch the recipe manifest
+        // --- Render the Recipe List ---
+        const ul = document.createElement('ul');
+        ul.classList.add('recipe-list');
 
-        if (recipes.length === 0) {
-            loadingMessage.textContent = 'No recipes found yet!';
+        recipesToDisplay.forEach(recipe => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = `#${recipe.id}`;
+            a.textContent = recipe.title;
+            a.dataset.filename = recipe.file;
+            a.classList.add('recipe-link');
+            li.appendChild(a);
+
+            if (recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0) {
+                const tagsDiv = document.createElement('div');
+                tagsDiv.classList.add('recipe-tags-display');
+                recipe.tags.forEach(tag => {
+                    const span = document.createElement('span');
+                    span.classList.add('recipe-tag-badge');
+                    span.textContent = tag;
+                    tagsDiv.appendChild(span);
+                });
+                li.appendChild(tagsDiv);
+            }
+            ul.appendChild(li);
+        });
+        recipesContainer.appendChild(ul);
+    }
+
+    // --- Function to display the A-Z navigation bar ---
+    function displayAlphabeticalNav() {
+        alphabetNavContainer.innerHTML = ''; // Clear existing nav
+        const navUl = document.createElement('ul');
+        navUl.classList.add('alphabet-nav-list');
+
+        const existingFirstLetters = new Set();
+        allRecipes.forEach(recipe => {
+            existingFirstLetters.add(recipe.title.charAt(0).toUpperCase());
+        });
+
+        for (let i = 65; i <= 90; i++) { // A-Z
+            const letter = String.fromCharCode(i);
+            const li = document.createElement('li');
+            const navLink = document.createElement('a');
+            navLink.href = '#'; // Use '#' as it's a filter
+            navLink.textContent = letter;
+            navLink.classList.add('alphabet-nav-link');
+
+            // Set active class if this letter is currently selected
+            if (currentStartingLetter === letter) {
+                navLink.classList.add('active');
+            }
+
+            // Optionally disable or style letters with no recipes
+            if (!existingFirstLetters.has(letter)) {
+                navLink.classList.add('disabled-letter');
+                navLink.style.pointerEvents = 'none'; // Make it unclickable
+            } else {
+                // Add click behavior for active letters
+                navLink.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    if (currentStartingLetter === letter) {
+                        currentStartingLetter = ''; // Deselect if already active
+                    } else {
+                        currentStartingLetter = letter; // Select new letter
+                    }
+                    // Re-render nav to update active state
+                    displayAlphabeticalNav();
+                    // Update recipe display based on new filter
+                    updateRecipeDisplay();
+                });
+            }
+            li.appendChild(navLink);
+            navUl.appendChild(li);
+        }
+        alphabetNavContainer.appendChild(navUl);
+    }
+
+    async function loadRecipeContent(filename) {
+        recipeListSection.style.display = 'none';
+        recipeContentSection.style.display = 'block';
+        recipeBodyDiv.innerHTML = 'Loading recipe...';
+
+        if (recipeCache[filename]) {
+            recipeBodyDiv.innerHTML = recipeCache[filename];
             return;
         }
 
-        const ul = document.createElement('ul');
-        ul.classList.add('recipe-list'); // Add a class for potential styling
-
-        recipes.forEach(recipe => {
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            a.href = `#${recipe.id}`; // Use the 'id' from the JSON for URL hash navigation
-            a.textContent = recipe.title; // Display the clean title from the JSON
-            a.dataset.filename = recipe.file; // Store the original filename to fetch the content later
-            a.classList.add('recipe-link'); // Add a class for event delegation
-            li.appendChild(a);
-            ul.appendChild(li);
-        });
-
-        recipesContainer.appendChild(ul); // Add the generated list to the container
-        loadingMessage.style.display = 'none'; // Hide loading message
-    }
-
-    // --- Function to load and display a specific recipe's content ---
-    async function loadRecipeContent(filename) {
-        recipeListSection.style.display = 'none'; // Hide the list section
-        recipeContentSection.style.display = 'block'; // Show the individual recipe section
-        recipeBodyDiv.innerHTML = 'Loading recipe...'; // Show a loading indicator
-
-        // Check if the recipe content is already in the cache
-        if (recipeCache[filename]) {
-            recipeBodyDiv.innerHTML = recipeCache[filename];
-            return; // Exit if already cached
-        }
-
         try {
-            // Fetch the recipe's HTML content using the correct base path
-            const response = await fetch(`${BASE_PATH}/blog/${filename}`); // <--- Modified path here
+            const response = await fetch(`${BASE_PATH}/blog/${filename}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            const htmlContent = await response.text(); // Get the raw HTML content
+            const htmlContent = await response.text();
 
-            recipeCache[filename] = htmlContent; // Store content in cache
-            recipeBodyDiv.innerHTML = htmlContent; // Inject the HTML content into the div
+            recipeCache[filename] = htmlContent;
+            recipeBodyDiv.innerHTML = htmlContent;
 
         } catch (error) {
             console.error('Error loading recipe content:', error);
@@ -104,67 +182,92 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Event Listener for Clicks on Recipe Links ---
-    // Using event delegation on the container for efficiency
+    // --- Event Listeners ---
     recipesContainer.addEventListener('click', (event) => {
-        // Check if the clicked element is a recipe link
         if (event.target.classList.contains('recipe-link')) {
-            event.preventDefault(); // Prevent default link behavior (page reload)
-            const filename = event.target.dataset.filename; // Get the filename from data-filename attribute
-            loadRecipeContent(filename); // Load the recipe content
-            window.location.hash = event.target.href.split('#')[1]; // Update URL hash for direct linking/back button
+            event.preventDefault();
+            const filename = event.target.dataset.filename;
+            loadRecipeContent(filename);
+            window.location.hash = event.target.href.split('#')[1];
         }
     });
 
-    // --- Event Listener for the "Back to Recipes" button ---
     backToListBtn.addEventListener('click', () => {
-        // Clearing the hash will trigger the 'hashchange' event,
-        // which then correctly calls displayRecipeList.
-        window.location.hash = ''; 
+        window.location.hash = ''; // Clear hash to go back to list
     });
 
-    // --- Event Listener for the "Home" navigation link ---
     homeLink.addEventListener('click', (event) => {
-        event.preventDefault(); // Prevent default link behavior
-        // Clearing the hash will trigger the 'hashchange' event,
-        // which then correctly calls displayRecipeList.
-        window.location.hash = ''; 
+        event.preventDefault();
+        currentDisplayMode = 'home';
+        currentStartingLetter = ''; // Clear letter filter when going to home
+        displayAlphabeticalNav(); // Update A-Z nav state
+        window.location.hash = ''; // Clear hash
+        updateRecipeDisplay(); // Show home list
     });
 
-    // --- Handle Browser History (Back/Forward buttons) and Direct URL Access with Hash ---
+    // NEW: Browse Index Link Event Listener
+    browseIndexLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        currentDisplayMode = 'index';
+        currentStartingLetter = ''; // Start index mode with no letter selected
+        displayAlphabeticalNav(); // Initialize A-Z nav
+        window.location.hash = ''; // Clear hash
+        updateRecipeDisplay(); // Show index view
+    });
+
+
+    // Handle hash changes and initial page load
     window.addEventListener('hashchange', async () => {
-        const recipeHashId = window.location.hash.substring(1); // Get the ID from the URL hash (remove '#')
+        const recipeHashId = window.location.hash.substring(1);
         if (recipeHashId) {
-            const recipes = await getRecipeManifest(); // Get the manifest to find the file
-            const targetRecipe = recipes.find(r => r.id === recipeHashId); // Find the recipe by its ID
+            if (allRecipes.length === 0) { // Ensure allRecipes is populated
+                allRecipes = await getRecipeManifest();
+            }
+            const targetRecipe = allRecipes.find(r => r.id === recipeHashId);
             if (targetRecipe) {
-                loadRecipeContent(targetRecipe.file); // Load the recipe content if found
+                loadRecipeContent(targetRecipe.file);
             } else {
-                displayRecipeList(); // If hash doesn't match a recipe, show the list
+                // If hash is invalid, go to home view
+                currentDisplayMode = 'home';
+                currentStartingLetter = '';
+                displayAlphabeticalNav();
+                updateRecipeDisplay();
             }
         } else {
-            // This is the sole, correct place to call displayRecipeList when the hash is empty
-            displayRecipeList(); 
+            // Hash is empty, show the appropriate list based on currentDisplayMode
+            updateRecipeDisplay();
         }
     });
 
     // --- Initial Page Load Logic ---
-    // This runs once when the page first loads to determine what to display
     async function initializePage() {
+        allRecipes = await getRecipeManifest(); // Fetch all recipes once
+
+        if (allRecipes.length === 0) {
+            loadingMessage.textContent = 'No recipes found to display.';
+            return;
+        }
+
+        // Sort recipes once, at the beginning, for consistent alphabetical display
+        allRecipes.sort((a, b) => a.title.localeCompare(b.title));
+
+        displayAlphabeticalNav(); // Initialize the A-Z navigation (it's hidden initially)
+
+        // Check hash for direct recipe link, otherwise show home list
         if (window.location.hash) {
             const recipeHashId = window.location.hash.substring(1);
-            const recipes = await getRecipeManifest(); // Fetch manifest for initial hash check
-            const targetRecipe = recipes.find(r => r.id === recipeHashId);
+            const targetRecipe = allRecipes.find(r => r.id === recipeHashId);
             if (targetRecipe) {
-                loadRecipeContent(targetRecipe.file); // Load specific recipe if hash matches
+                loadRecipeContent(targetRecipe.file);
             } else {
-                displayRecipeList(); // Otherwise, show the full list
+                currentDisplayMode = 'home'; // Invalid hash, default to home
+                updateRecipeDisplay();
             }
         } else {
-            displayRecipeList(); // No hash present, so just show the list
+            currentDisplayMode = 'home'; // No hash, default to home view
+            updateRecipeDisplay();
         }
     }
 
-    // Call the initialization function when the DOM is ready
     initializePage();
 });
