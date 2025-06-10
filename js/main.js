@@ -11,11 +11,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Use a cache to store loaded recipe contents to avoid re-fetching the same recipe multiple times
     const recipeCache = {};
 
+    // --- IMPORTANT: Define the base path for your GitHub Project Page ---
+    // This should be your repository name (e.g., 'recipe' if your URL is https://kzwkt.github.io/recipe/)
+    const BASE_PATH = '/recipe'; // <--- Make sure this matches your repository name!
+
     // --- Function to fetch the pre-generated recipes-list.json manifest ---
     async function getRecipeManifest() {
         try {
-            // Fetch the JSON file from the root of your deployed GitHub Pages site
-            const response = await fetch('/recipes-list.json');
+            // Fetch the JSON file using the correct base path
+            const response = await fetch(`${BASE_PATH}/recipes-list.json`);
             if (!response.ok) {
                 // Handle cases where the file might not be found (e.g., first deployment)
                 if (response.status === 404) {
@@ -59,6 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
         recipes.forEach(recipe => {
             const li = document.createElement('li');
             const a = document.createElement('a');
+            // Use the BASE_PATH for hrefs if you want them to be full paths,
+            // or just use the hash for SPA-like navigation
+            // For hash navigation, the # handles the base path.
             a.href = `#${recipe.id}`; // Use the 'id' from the JSON for URL hash navigation
             a.textContent = recipe.title; // Display the clean title from the JSON
             a.dataset.filename = recipe.file; // Store the original filename to fetch the content later
@@ -84,8 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // Fetch the recipe's HTML content from the 'blog/' folder
-            const response = await fetch(`blog/${filename}`);
+            // Fetch the recipe's HTML content using the correct base path
+            const response = await fetch(`${BASE_PATH}/blog/${filename}`); // <--- Modified path here
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
@@ -101,63 +108,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listener for Clicks on Recipe Links ---
-    // Using event delegation on the container for efficiency
     recipesContainer.addEventListener('click', (event) => {
-        // Check if the clicked element is a recipe link
         if (event.target.classList.contains('recipe-link')) {
-            event.preventDefault(); // Prevent default link behavior (page reload)
-            const filename = event.target.dataset.filename; // Get the filename from data-filename attribute
-            loadRecipeContent(filename); // Load the recipe content
-            window.location.hash = event.target.href.split('#')[1]; // Update URL hash for direct linking/back button
+            event.preventDefault();
+            const filename = event.target.dataset.filename;
+            loadRecipeContent(filename);
+            window.location.hash = event.target.href.split('#')[1];
         }
     });
 
     // --- Event Listener for the "Back to Recipes" button ---
     backToListBtn.addEventListener('click', () => {
-        window.location.hash = ''; // Clear the URL hash
-        displayRecipeList(); // Show the recipe list again
+        window.location.hash = '';
+        displayRecipeList();
     });
 
     // --- Event Listener for the "Home" navigation link ---
     homeLink.addEventListener('click', (event) => {
-        event.preventDefault(); // Prevent default link behavior
-        window.location.hash = ''; // Clear the URL hash
-        displayRecipeList(); // Show the recipe list again
+        event.preventDefault();
+        window.location.hash = '';
+        displayRecipeList();
     });
 
     // --- Handle Browser History (Back/Forward buttons) and Direct URL Access with Hash ---
     window.addEventListener('hashchange', async () => {
-        const recipeHashId = window.location.hash.substring(1); // Get the ID from the URL hash (remove '#')
+        const recipeHashId = window.location.hash.substring(1);
         if (recipeHashId) {
-            const recipes = await getRecipeManifest(); // Get the manifest to find the file
-            const targetRecipe = recipes.find(r => r.id === recipeHashId); // Find the recipe by its ID
+            const recipes = await getRecipeManifest();
+            const targetRecipe = recipes.find(r => r.id === recipeHashId);
             if (targetRecipe) {
-                loadRecipeContent(targetRecipe.file); // Load the recipe content if found
+                loadRecipeContent(targetRecipe.file);
             } else {
-                displayRecipeList(); // If hash doesn't match a recipe, show the list
+                displayRecipeList();
             }
         } else {
-            displayRecipeList(); // If no hash, show the list
+            displayRecipeList();
         }
     });
 
     // --- Initial Page Load Logic ---
-    // This runs once when the page first loads to determine what to display
     async function initializePage() {
         if (window.location.hash) {
             const recipeHashId = window.location.hash.substring(1);
-            const recipes = await getRecipeManifest(); // Fetch manifest for initial hash check
+            const recipes = await getRecipeManifest();
             const targetRecipe = recipes.find(r => r.id === recipeHashId);
             if (targetRecipe) {
-                loadRecipeContent(targetRecipe.file); // Load specific recipe if hash matches
+                loadRecipeContent(targetRecipe.file);
             } else {
-                displayRecipeList(); // Otherwise, show the full list
+                displayRecipeList();
             }
         } else {
-            displayRecipeList(); // No hash present, so just show the list
+            displayRecipeList();
         }
     }
 
-    // Call the initialization function when the DOM is ready
     initializePage();
 });
