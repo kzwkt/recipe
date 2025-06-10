@@ -3,30 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Dynamic Blog</title>
+    <title>My Delicious Recipes</title>
     <link rel="stylesheet" href="css/style.css"> </head>
 <body>
     <header>
-        <h1>My Dynamic Blog</h1>
+        <h1>Welcome to My Recipe Book!</h1>
         <nav>
             <a href="#" id="home-link">Home</a>
-        </nav>
+            </nav>
     </header>
 
     <main>
-        <section id="blog-posts-list">
-            <h2>Recent Posts</h2>
-            <p id="loading-message">Loading blog posts...</p>
-            </section>
+        <section id="recipe-list-section">
+            <h2>Our Latest Recipes</h2>
+            <p id="loading-message">Loading recipes...</p>
+            <div id="recipes-container">
+                </div>
+        </section>
 
-        <section id="blog-post-content" style="display: none;">
-            <button id="back-to-list-btn" style="margin-bottom: 10px;">Back to Posts</button>
-            <div id="post-body"></div>
+        <section id="recipe-content-section" style="display: none;">
+            <button id="back-to-list-btn" style="margin-bottom: 15px; padding: 8px 15px; cursor: pointer;">Back to Recipes</button>
+            <div id="recipe-body">
+                </div>
         </section>
     </main>
 
     <footer>
-        <p>&copy; 2025 My Dynamic Blog</p>
+        <p>&copy; 2025 My Recipe Book</p>
     </footer>
 
     <script src="js/main.js"></script>
