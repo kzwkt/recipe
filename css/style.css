@@ -1,57 +1,85 @@
-/* Basic styling for your Recipe Book */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+
+/* --- Color Palette --- */
+/* Primary: #E74C3C (Rustic Red/Tomato) */
+/* Accent: #27AE60 (Earthy Green/Herb) */
+/* Highlight: #F1C40F (Sunny Yellow/Spice) */
+/* Text: #34495E (Dark Slate/Subtle) */
+/* Background: #FDF5E6 (Creamy White/Linen) */
+/* Border/Light: #ECF0F1 (Light Grey/Flour) */
+
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Quicksand', sans-serif; /* Our cool new font! */
     line-height: 1.6;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
-    color: #333;
+    background-color: #FDF5E6; /* Creamy background */
+    color: #34495E; /* Dark slate text */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 header {
-    background: #333;
+    background: #E74C3C; /* Rustic Red header */
     color: #fff;
-    padding: 1rem 0;
+    padding: 1.5rem 0; /* Slightly more padding */
     text-align: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
 header h1 {
     margin: 0;
-    padding-bottom: 10px;
+    padding-bottom: 0.5rem;
+    font-size: 2.5rem; /* Larger title */
+    font-weight: 700; /* Bolder */
+    letter-spacing: 1px; /* A little spacing */
 }
 
 nav a {
     color: #fff;
     text-decoration: none;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1.2rem;
     display: inline-block;
+    transition: background-color 0.3s ease;
+    border-radius: 5px;
+    font-weight: 600; /* Semi-bold */
 }
 
 nav a:hover {
-    background: #555;
+    background: #C0392B; /* Darker red on hover */
 }
 
 main {
-    padding: 20px;
-    max-width: 900px;
-    margin: 20px auto;
+    padding: 2rem; /* More generous padding */
+    width: 90%;
+    max-width: 1000px; /* Slightly narrower max width for better readability */
+    margin: 2rem auto; /* More margin around the box */
     background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 12px; /* More rounded corners */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* More prominent shadow */
+    flex-grow: 1;
 }
 
 h2 {
-    color: #007bff;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
+    color: #E74C3C; /* Using rustic red for headings */
+    border-bottom: 2px solid #ECF0F1; /* Light grey border */
+    padding-bottom: 0.8rem;
     margin-top: 0;
+    font-size: 2rem;
+    font-weight: 600; /* Semi-bold */
+    text-align: center; /* Centered heading */
+    margin-bottom: 1.5rem;
 }
 
 #loading-message {
     font-style: italic;
     color: #666;
     text-align: center;
+    padding: 2rem;
+    font-size: 1.1rem;
 }
 
 .recipe-list {
@@ -60,56 +88,146 @@ h2 {
 }
 
 .recipe-list li {
-    background: #e9ecef;
-    margin-bottom: 10px;
-    padding: 15px;
-    border-radius: 5px;
-    display: flex; /* Makes the whole area clickable */
+    background: #ECF0F1; /* Light grey background for list items */
+    margin-bottom: 1rem;
+    padding: 1.2rem; /* More padding for list items */
+    border-radius: 8px; /* Nicer rounded corners */
+    display: flex;
     align-items: center;
+    transition: background-color 0.2s ease, transform 0.2s ease; /* Smooth hover effects */
 }
 
 .recipe-list li:hover {
-    background: #dee2e6;
+    background: #D9DCDE; /* Slightly darker on hover */
+    transform: translateY(-3px); /* Subtle lift effect */
 }
 
 .recipe-list li a {
     text-decoration: none;
-    color: #333;
-    font-weight: bold;
-    font-size: 1.1em;
-    flex-grow: 1; /* Makes the link fill the available space */
+    color: #34495E; /* Dark slate for link text */
+    font-weight: 600;
+    font-size: 1.2rem; /* Larger font for recipe titles */
+    flex-grow: 1;
+    display: block;
 }
 
 .recipe-list li a:hover {
-    color: #0056b3;
+    color: #E74C3C; /* Rustic red on link hover */
 }
 
 #back-to-list-btn {
-    background-color: #007bff;
+    background-color: #27AE60; /* Earthy Green for button */
     color: white;
     border: none;
-    border-radius: 5px;
-    padding: 10px 20px;
+    border-radius: 8px; /* Rounded button */
+    padding: 0.8rem 1.5rem; /* Generous padding */
     cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Button shadow */
 }
 
 #back-to-list-btn:hover {
-    background-color: #0056b3;
+    background-color: #229954; /* Darker green on hover */
+    transform: translateY(-1px); /* Subtle lift */
 }
 
 #recipe-body {
-    margin-top: 20px;
-    padding: 15px;
-    border: 1px solid #eee;
-    background-color: #fcfcfc;
-    border-radius: 5px;
+    margin-top: 2rem; /* More margin */
+    padding: 1.5rem; /* More padding */
+    border: 1px solid #ECF0F1;
+    background-color: #fcfcfc; /* Slightly off-white for recipe content */
+    border-radius: 8px;
+    line-height: 1.8; /* Improve readability of body text */
+}
+
+#recipe-body h3 { /* Assuming recipes might have H3s */
+    color: #27AE60; /* Green for recipe subheadings */
+    font-size: 1.6rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+}
+
+#recipe-body p {
+    margin-bottom: 1rem;
+}
+
+#recipe-body ul, #recipe-body ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 footer {
     text-align: center;
-    padding: 20px;
+    padding: 1.5rem;
     color: #777;
-    font-size: 0.9em;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    margin-top: auto;
+    background-color: #ECF0F1; /* Light background for footer */
+    border-top: 1px solid #D9DCDE;
+}
+
+/* --- Responsive adjustments for smaller screens --- */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2rem;
+    }
+
+    main {
+        width: 95%;
+        padding: 1.5rem;
+        margin: 1.5rem auto;
+    }
+
+    h2 {
+        font-size: 1.6rem;
+    }
+
+    .recipe-list li {
+        padding: 1rem;
+    }
+
+    .recipe-list li a {
+        font-size: 1.1rem;
+    }
+
+    #back-to-list-btn {
+        padding: 0.7rem 1.2rem;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.8rem;
+    }
+
+    nav a {
+        padding: 0.4rem 0.8rem;
+    }
+
+    main {
+        padding: 1rem;
+        margin: 1rem auto;
+    }
+
+    h2 {
+        font-size: 1.4rem;
+    }
+
+    .recipe-list li {
+        padding: 0.8rem;
+    }
+
+    .recipe-list li a {
+        font-size: 1rem;
+    }
+
+    #back-to-list-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
 }
