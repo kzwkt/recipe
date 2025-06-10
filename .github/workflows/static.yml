@@ -1,12 +1,12 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Deploy Recipe Site to Pages
 
 on:
-  # Runs on pushes targeting the default branch
+  # Runs on pushes targeting the default branch (e.g., 'main' or 'master')
   push:
     branches: ["main"]
 
-  # Allows you to run this workflow manually from the Actions tab
+  # Allows you to run this workflow manually from the Actions tab in GitHub
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
@@ -22,22 +22,52 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
+  # This job handles both generating the recipe list and deploying the site
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+      url: ${{ steps.deployment.outputs.page_url }} # The URL of your deployed site
+    runs-on: ubuntu-latest # Uses the latest Ubuntu environment for the job
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4 # Checks out your repository code
+
+      # --- Step 1: Set up Node.js environment ---
+      # This is needed to run the JavaScript script that generates your recipes-list.json
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # Using Node.js version 18 (a stable, long-term support version)
+
+      # --- Step 2: Generate recipes-list.json (your "index DB") ---
+      # This now calls the external Node.js script.
+      - name: Generate recipes-list.json
+        run: |
+          # Execute the Node.js script
+          node js/generate-recipe-index.js
+        env: # Pass environment variables to the Node.js script
+          # Use github.workspace to ensure correct absolute paths on the runner
+          # The script will read these env variables to know where to find content and where to save the output.
+          BLOG_CONTENT_FOLDER: ${{ github.workspace }}/blog
+          OUTPUT_INDEX_DB_FILE: ${{ github.workspace }}/recipes-list.json
+
+      # --- Step 3: Set up GitHub Pages environment ---
+      # This action prepares the runner for deploying to GitHub Pages
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Upload artifact
+
+      # --- Step 4: Upload the entire site as an artifact ---
+      # This uploads all files from the current directory ('.'),
+      # which now includes your generated recipes-list.json,
+      # along with your index.html, js/, css/, and blog/ content.
+      - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          path: '.' # Uploads everything in the repository root
+
+      # --- Step 5: Deploy the artifact to GitHub Pages ---
+      # This action takes the uploaded artifact and makes it live on your GitHub Pages site.
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
