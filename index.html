@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Delicious Recipes</title>
+    <base href="/recipe/"> 
+
     <link rel="stylesheet" href="css/style.css"> </head>
 <body>
     <header>
         <h1>Welcome to My Recipe Book!</h1>
         <nav>
             <a href="#" id="home-link">Home</a>
-            </nav>
+        </nav>
     </header>
 
     <main>
@@ -18,13 +20,13 @@
             <h2>Our Latest Recipes</h2>
             <p id="loading-message">Loading recipes...</p>
             <div id="recipes-container">
-                </div>
+            </div>
         </section>
 
         <section id="recipe-content-section" style="display: none;">
             <button id="back-to-list-btn" style="margin-bottom: 15px; padding: 8px 15px; cursor: pointer;">Back to Recipes</button>
             <div id="recipe-body">
-                </div>
+            </div>
         </section>
     </main>
 
@@ -32,6 +34,5 @@
         <p>&copy; 2025 My Recipe Book</p>
     </footer>
 
-    <script src="js/main.js"></script>
-</body>
+    <script src="js/main.js"></script> </body>
 </html>
