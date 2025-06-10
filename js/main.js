@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${BASE_PATH}/recipes-list.json`);
             if (!response.ok) {
                 if (response.status === 404) {
-                    loadingMessage.textContent = 'Recipes list not found. Please check deployment and console.';
+                    loadingMessage.textContent = 'Recipes list not found. Please check deployment.';
                     return [];
                 }
                 throw new Error(`HTTP error! Status: ${response.status}`);
