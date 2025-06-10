@@ -1,194 +1,163 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const postsListSection = document.getElementById('blog-posts-list');
+    // Get references to key elements in the HTML
+    const recipeListSection = document.getElementById('recipe-list-section');
+    const recipesContainer = document.getElementById('recipes-container'); // Container for the recipe links
     const loadingMessage = document.getElementById('loading-message');
-    const postContentSection = document.getElementById('blog-post-content');
-    const postBodyDiv = document.getElementById('post-body');
+    const recipeContentSection = document.getElementById('recipe-content-section');
+    const recipeBodyDiv = document.getElementById('recipe-body'); // Div to load recipe HTML into
     const backToListBtn = document.getElementById('back-to-list-btn');
     const homeLink = document.getElementById('home-link');
 
-    const GITHUB_USERNAME = 'kzwkt'; // REPLACE THIS with your GitHub username
-    const REPO_NAME = 'recipe'; // REPLACE THIS with your repository name
-    const BLOG_FOLDER_PATH = 'blog'; // The folder where your blog HTML files are
+    // Use a cache to store loaded recipe contents to avoid re-fetching the same recipe multiple times
+    const recipeCache = {};
 
-    // Cache to store loaded post contents to avoid re-fetching
-    const postCache = {};
-
-    // Function to get list of blog post files from GitHub API
-    async function getBlogPostFiles() {
-        // GitHub API endpoint for directory contents
-        const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${BLOG_FOLDER_PATH}`;
-
+    // --- Function to fetch the pre-generated recipes-list.json manifest ---
+    async function getRecipeManifest() {
         try {
-            const response = await fetch(apiUrl, {
-                headers: {
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
+            // Fetch the JSON file from the root of your deployed GitHub Pages site
+            const response = await fetch('/recipes-list.json');
             if (!response.ok) {
+                // Handle cases where the file might not be found (e.g., first deployment)
                 if (response.status === 404) {
-                    console.error('GitHub API returned 404. Check username, repo name, and folder path.');
+                    console.warn('recipes-list.json not found. It might not have been generated yet or the path is incorrect.');
+                    return []; // Return an empty array if not found
                 }
-                throw new Error(`GitHub API error! Status: ${response.status}`);
+                throw new Error(`Failed to load recipes-list.json! Status: ${response.status}`);
             }
-            const files = await response.json();
-            // Filter for HTML files and sort them (e.g., alphabetically or by a naming convention for dates)
-            const htmlFiles = files
-                .filter(file => file.type === 'file' && file.name.endsWith('.html'))
-                // You might want to sort these if your filenames aren't implicitly ordered (e.g., by date prefix)
-                .sort((a, b) => b.name.localeCompare(a.name)); // Example: sort Z-A by filename
-
-            return htmlFiles;
-
+            const data = await response.json();
+            return data;
         } catch (error) {
-            console.error('Error fetching blog post files from GitHub API:', error);
-            loadingMessage.textContent = 'Error loading posts. Please check console.';
+            console.error('Error fetching recipes-list.json:', error);
+            loadingMessage.textContent = 'Error loading recipes. Please check the console for details.';
             return [];
         }
     }
 
-    // Function to display the list of blog posts
-    async function displayPostList() {
-        postsListSection.style.display = 'block';
-        postContentSection.style.display = 'none';
-        postBodyDiv.innerHTML = '';
+    // --- Function to display the list of recipes on the homepage ---
+    async function displayRecipeList() {
+        recipeListSection.style.display = 'block'; // Show the list section
+        recipeContentSection.style.display = 'none'; // Hide the individual recipe section
+        recipeBodyDiv.innerHTML = ''; // Clear any previously loaded recipe content
         loadingMessage.style.display = 'block'; // Show loading message
 
-        // Clear existing list items before re-rendering
-        const existingUl = postsListSection.querySelector('ul.blog-list');
+        // Clear any existing list items before re-rendering to prevent duplicates
+        const existingUl = recipesContainer.querySelector('ul.recipe-list');
         if (existingUl) {
             existingUl.remove();
         }
 
-        const files = await getBlogPostFiles();
+        const recipes = await getRecipeManifest(); // Fetch the recipe manifest
 
-        if (files.length === 0) {
-            loadingMessage.textContent = 'No blog posts found.';
+        if (recipes.length === 0) {
+            loadingMessage.textContent = 'No recipes found yet!';
             return;
         }
 
         const ul = document.createElement('ul');
-        ul.classList.add('blog-list');
+        ul.classList.add('recipe-list'); // Add a class for potential styling
 
-        for (const file of files) {
-            // Fetch the content of each file to get the first line (title)
-            const fileContent = await fetch(`blog/${file.name}`)
-                .then(response => response.text())
-                .catch(error => {
-                    console.error(`Error fetching content for ${file.name}:`, error);
-                    return ''; // Return empty string on error
-                });
-
-            // Extract the first line as the title
-            const firstLine = fileContent.split('\n')[0].trim();
-            const title = firstLine || `Untitled Post (${file.name})`; // Fallback title
-
+        recipes.forEach(recipe => {
             const li = document.createElement('li');
             const a = document.createElement('a');
-            a.href = `#${file.name.replace('.html', '')}`; // Use filename as hash ID
-            a.textContent = title;
-            a.dataset.filename = file.name; // Store full filename for loading
-            a.classList.add('post-link');
+            a.href = `#${recipe.id}`; // Use the 'id' from the JSON for URL hash navigation
+            a.textContent = recipe.title; // Display the clean title from the JSON
+            a.dataset.filename = recipe.file; // Store the original filename to fetch the content later
+            a.classList.add('recipe-link'); // Add a class for event delegation
             li.appendChild(a);
             ul.appendChild(li);
-        }
+        });
 
-        postsListSection.querySelector('h2').after(ul);
+        recipesContainer.appendChild(ul); // Add the generated list to the container
         loadingMessage.style.display = 'none'; // Hide loading message
     }
 
-    // Function to load and display a specific blog post
-    async function loadBlogPost(filename) {
-        postsListSection.style.display = 'none';
-        postContentSection.style.display = 'block';
-        postBodyDiv.innerHTML = 'Loading post...'; // Show loading indicator for post
+    // --- Function to load and display a specific recipe's content ---
+    async function loadRecipeContent(filename) {
+        recipeListSection.style.display = 'none'; // Hide the list section
+        recipeContentSection.style.display = 'block'; // Show the individual recipe section
+        recipeBodyDiv.innerHTML = 'Loading recipe...'; // Show a loading indicator
 
-        // Check cache first
-        if (postCache[filename]) {
-            postBodyDiv.innerHTML = postCache[filename];
-            return;
+        // Check if the recipe content is already in the cache
+        if (recipeCache[filename]) {
+            recipeBodyDiv.innerHTML = recipeCache[filename];
+            return; // Exit if already cached
         }
 
         try {
+            // Fetch the recipe's HTML content from the 'blog/' folder
             const response = await fetch(`blog/${filename}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            const htmlContent = await response.text();
+            const htmlContent = await response.text(); // Get the raw HTML content
 
-            // Store in cache
-            postCache[filename] = htmlContent;
+            recipeCache[filename] = htmlContent; // Store content in cache
+            recipeBodyDiv.innerHTML = htmlContent; // Inject the HTML content into the div
 
-            postBodyDiv.innerHTML = htmlContent;
         } catch (error) {
-            console.error('Error loading blog post:', error);
-            postBodyDiv.innerHTML = `<p style="color: red;">Failed to load post: ${filename}.</p>`;
+            console.error('Error loading recipe content:', error);
+            recipeBodyDiv.innerHTML = `<p style="color: red;">Failed to load recipe: ${filename}.</p>`;
         }
     }
 
-    // Event listener for clicks on the blog post links (using delegation)
-    postsListSection.addEventListener('click', (event) => {
-        if (event.target.classList.contains('post-link')) {
-            event.preventDefault();
-            const filename = event.target.dataset.filename;
-            loadBlogPost(filename);
-            window.location.hash = event.target.href.split('#')[1];
+    // --- Event Listener for Clicks on Recipe Links ---
+    // Using event delegation on the container for efficiency
+    recipesContainer.addEventListener('click', (event) => {
+        // Check if the clicked element is a recipe link
+        if (event.target.classList.contains('recipe-link')) {
+            event.preventDefault(); // Prevent default link behavior (page reload)
+            const filename = event.target.dataset.filename; // Get the filename from data-filename attribute
+            loadRecipeContent(filename); // Load the recipe content
+            window.location.hash = event.target.href.split('#')[1]; // Update URL hash for direct linking/back button
         }
     });
 
-    // Event listener for "Back to Posts" button
+    // --- Event Listener for the "Back to Recipes" button ---
     backToListBtn.addEventListener('click', () => {
-        window.location.hash = ''; // Clear the hash
-        displayPostList();
+        window.location.hash = ''; // Clear the URL hash
+        displayRecipeList(); // Show the recipe list again
     });
 
-    // Event listener for "Home" link
+    // --- Event Listener for the "Home" navigation link ---
     homeLink.addEventListener('click', (event) => {
-        event.preventDefault();
-        window.location.hash = ''; // Clear the hash
-        displayPostList();
+        event.preventDefault(); // Prevent default link behavior
+        window.location.hash = ''; // Clear the URL hash
+        displayRecipeList(); // Show the recipe list again
     });
 
-
-    // Handle direct URL access with hash (e.g., yourpage.github.io/#my-first-post)
-    window.addEventListener('hashchange', () => {
-        const postHashId = window.location.hash.substring(1);
-        if (postHashId) {
-             // We need to map the hash ID back to the full filename.
-             // This assumes filenames are unique and match the hash format (e.g., 'my-first-post').
-             // A more robust solution might store the filename in the hash, e.g. #file=my-first-post.html
-             // For simplicity, we'll fetch the list again to find the file.
-            getBlogPostFiles().then(files => {
-                const targetFile = files.find(f => f.name.replace('.html', '') === postHashId);
-                if (targetFile) {
-                    loadBlogPost(targetFile.name);
-                } else {
-                    displayPostList(); // Hash not found, show list
-                }
-            }).catch(error => {
-                console.error('Error finding post by hash:', error);
-                displayPostList();
-            });
-
+    // --- Handle Browser History (Back/Forward buttons) and Direct URL Access with Hash ---
+    window.addEventListener('hashchange', async () => {
+        const recipeHashId = window.location.hash.substring(1); // Get the ID from the URL hash (remove '#')
+        if (recipeHashId) {
+            const recipes = await getRecipeManifest(); // Get the manifest to find the file
+            const targetRecipe = recipes.find(r => r.id === recipeHashId); // Find the recipe by its ID
+            if (targetRecipe) {
+                loadRecipeContent(targetRecipe.file); // Load the recipe content if found
+            } else {
+                displayRecipeList(); // If hash doesn't match a recipe, show the list
+            }
         } else {
-            displayPostList(); // No hash, show the list
+            displayRecipeList(); // If no hash, show the list
         }
     });
 
-    // Initial load: check if there's a hash, otherwise show list
-    if (window.location.hash) {
-        const postHashId = window.location.hash.substring(1);
-        getBlogPostFiles().then(files => {
-            const targetFile = files.find(f => f.name.replace('.html', '') === postHashId);
-            if (targetFile) {
-                loadBlogPost(targetFile.name);
+    // --- Initial Page Load Logic ---
+    // This runs once when the page first loads to determine what to display
+    async function initializePage() {
+        if (window.location.hash) {
+            const recipeHashId = window.location.hash.substring(1);
+            const recipes = await getRecipeManifest(); // Fetch manifest for initial hash check
+            const targetRecipe = recipes.find(r => r.id === recipeHashId);
+            if (targetRecipe) {
+                loadRecipeContent(targetRecipe.file); // Load specific recipe if hash matches
             } else {
-                displayPostList();
+                displayRecipeList(); // Otherwise, show the full list
             }
-        }).catch(error => {
-            console.error('Error on initial hash load:', error);
-            displayPostList();
-        });
-    } else {
-        displayPostList();
+        } else {
+            displayRecipeList(); // No hash present, so just show the list
+        }
     }
+
+    // Call the initialization function when the DOM is ready
+    initializePage();
 });
