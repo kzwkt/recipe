@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
             indexControlsContainer.style.display = 'block';
 
             recipesToDisplay = currentStartingLetter
-                ? allRecipes.filter(recipe => recipe.title.charAt(0).toUpperCase() === currentStartingLetter)
+                ? allRecipes.filter(recipe => recipe.title?.charAt(0).toUpperCase() === currentStartingLetter)
                 : [];
 
             if (currentStartingLetter && recipesToDisplay.length === 0) {
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch(`<span class="math-inline">\{BASE\_PATH\}/blog/</span>{filename}`);
+            const response = await fetch(`${BASE_PATH}/blog/${filename}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
@@ -215,4 +215,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function initializePage() {
-        loading
+        loadingMessage.textContent = 'Loading recipes...';
+        allRecipes = await getRecipeManifest();
+
+        if (allRecipes.length === 0) {
+            loadingMessage.textContent = 'No recipes found to display. Please ensure recipes-list.json is correctly generated and accessible.';
+            return;
+        }
+
+        allRecipes.sort((a, b) => a.title.localeCompare(b.title));
+
+        displayAlphabeticalNav();
+
+        if (window.location.hash) {
+            const recipeHashId = window.location.hash.substring(1);
+            const targetRecipe = allRecipes.find(r => r.id === recipeHashId);
+            if (targetRecipe) {
+                loadRecipeContent(targetRecipe.file);
+            } else {
+                currentDisplayMode = 'home';
+                updateRecipeDisplay();
+            }
+        } else {
+            currentDisplayMode = 'home';
+            updateRecipeDisplay();
+        }
+    }
+
+    initializePage();
+});
