@@ -39,27 +39,35 @@ header h1 {
     letter-spacing: 1px;
 }
 
+nav {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem; /* Space between nav links */
+    margin-top: 0.5rem;
+}
+
 nav a {
     color: #fff;
     text-decoration: none;
-    padding: 0.5rem 1.2rem;
+    padding: 0.6rem 1.5rem;
     display: inline-block;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
     border-radius: 5px;
     font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Subtle border */
 }
 
 nav a:hover {
     background: #C0392B;
+    transform: translateY(-2px);
 }
 
 main {
-    /* KEY CHANGE FOR READABILITY */
     max-width: 70ch; /* Max width based on character count for readability */
     width: 90%; /* Still allows it to shrink on smaller screens */
-    
-    padding: 2rem; /* Consistent padding inside the content box */
-    margin: 2rem auto; /* Top/bottom margin, auto for left/right centering */
+
+    padding: 2rem;
+    margin: 2rem auto;
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
@@ -96,6 +104,7 @@ h2 {
     padding: 1.2rem;
     border-radius: 8px;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
@@ -112,6 +121,7 @@ h2 {
     font-size: 1.2rem;
     flex-grow: 1;
     display: block;
+    margin-right: 1rem;
 }
 
 .recipe-list li a:hover {
@@ -155,7 +165,7 @@ h2 {
 
 #recipe-body p, #recipe-body ul, #recipe-body ol {
     margin-bottom: 1rem;
-    font-size: 1.1rem; /* Ensure recipe content text is readable */
+    font-size: 1.1rem;
 }
 
 #recipe-body ul, #recipe-body ol {
@@ -173,6 +183,83 @@ footer {
     border-top: 1px solid #D9DCDE;
 }
 
+/* --- NEW/ADJUSTED STYLES for Index Controls --- */
+#index-controls-container {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: #fcfcfc;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+#alphabet-nav-container {
+    /* No specific margin-bottom here, it's inside index-controls-container */
+}
+
+.alphabet-nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.alphabet-nav-link {
+    display: inline-block;
+    text-decoration: none;
+    color: #E74C3C;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 5px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.alphabet-nav-link:hover {
+    background-color: #E74C3C;
+    color: white;
+}
+
+.alphabet-nav-link.active {
+    background-color: #27AE60;
+    color: white;
+    font-weight: 700;
+}
+
+.alphabet-nav-link.active:hover {
+    background-color: #229954;
+}
+
+.alphabet-nav-link.disabled-letter {
+    color: #bbb;
+    cursor: default;
+    opacity: 0.6;
+    font-weight: 400;
+}
+
+/* Optional: Badge for tags on recipe list items */
+.recipe-tags-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-left: auto;
+    font-size: 0.8rem;
+    align-items: center;
+}
+
+.recipe-tag-badge {
+    background-color: #FDF5E6;
+    color: #E74C3C;
+    border: 1px solid #E74C3C;
+    padding: 0.2rem 0.6rem;
+    border-radius: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 /* --- Responsive adjustments for smaller screens --- */
 @media (max-width: 768px) {
     header h1 {
@@ -180,7 +267,7 @@ footer {
     }
 
     main {
-        width: 95%; /* Give it more width on smaller screens */
+        width: 95%;
         padding: 1.5rem;
         margin: 1.5rem auto;
     }
@@ -200,6 +287,16 @@ footer {
     #back-to-list-btn {
         padding: 0.7rem 1.2rem;
         font-size: 1rem;
+    }
+
+    .alphabet-nav-link {
+        font-size: 1rem;
+        padding: 0.2rem 0.5rem;
+    }
+
+    nav {
+        flex-direction: column; /* Stack nav links on small screens */
+        gap: 0.8rem;
     }
 }
 
