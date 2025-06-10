@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const backToListBtn = document.getElementById('back-to-list-btn');
     const homeLink = document.getElementById('home-link');
 
-    const GITHUB_USERNAME = 'YOUR_GITHUB_USERNAME'; // REPLACE THIS with your GitHub username
-    const REPO_NAME = 'YOUR_REPO_NAME'; // REPLACE THIS with your repository name
+    const GITHUB_USERNAME = 'kzwkt'; // REPLACE THIS with your GitHub username
+    const REPO_NAME = 'recipe'; // REPLACE THIS with your repository name
     const BLOG_FOLDER_PATH = 'blog'; // The folder where your blog HTML files are
 
     // Cache to store loaded post contents to avoid re-fetching
